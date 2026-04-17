@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+
+	"github.com/MrJc01/crompressor-video/internal/engine"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +27,7 @@ var trainCmd = &cobra.Command{
 		}
 		
 		fmt.Printf(">> Mapeando O(1) Tensors no disco: %s\n", dataPath)
-		// TODO: Injetar AgnosticBrain.TrainData
+		engine.RunTrain(dataPath)
 	},
 }
 

@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/MrJc01/crompressor-video/internal/engine"
 	"github.com/spf13/cobra"
 )
 
@@ -20,11 +21,8 @@ var encodeCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("[SRE ENCODER] Disparando Lógica de Destruição FFMPEG Raw...\n")
-		fmt.Printf(">> Mapeando Cérebro: %s\n", brainEncodePath)
-		fmt.Printf(">> Mastigando: %s -> %s\n", inFile, outFile)
-		
-		// TODO: Injetar P2P_Emissor pipeline convertendo Byte Array em UUID List
+		fmt.Printf("[SRE ENCODER] Disparando Lógica FFMPEG Raw...\n")
+		engine.RunEncode(inFile, outFile, brainEncodePath)
 	},
 }
 
