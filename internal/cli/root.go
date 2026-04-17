@@ -28,4 +28,5 @@ func init() {
 	rootCmd.AddCommand(trainCmd)
 	rootCmd.AddCommand(encodeCmd)
 	rootCmd.AddCommand(playCmd)
+	rootCmd.AddCommand(serveCmd)
 }
