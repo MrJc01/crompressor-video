@@ -72,6 +72,9 @@ Lutar contra o renderizador 2D do Canvas em HTML ainda exige que o Javascript mo
 **A solução final definitiva seria:** Pregar o arquivo `HIBRIDO.GOB` inteiro permanentemente na VRAM da Placa de Vídeo do Javascript via uma Ferramenta chamada **WebGPU**. 
 Sendo assim, o pacote de dezenas de megabytes só se move da HD para a GPU no Load Page. O Video será apenas uma injeção de ID's Inteiros. Nossa "Placa de vídeo" vira uma dicionário que plota quadros infinitamente mais velozes do que enviar o vídeo já processado porque não há decodificação geométrica (Zero custo de CPU), só textura pré-existente mapeada num array.
 
+## Próximas Pistas Inovadoras (Anotação de Backlog)
+**Previsão Autônoma de Frames via ML:** Acoplaremos modelos neurais voltados para prever os Hashes/Tensores. Se a internet falhar ou perdermos blocos UUID (.crom corrompido), ou se quisermos criar "16K Upscaling Nativos", o próprio Cérebro na memória VRAM usará IA para "Alucinar/Prever" o próximo Tensor coerente compensando a miopia da rede totalmente sem depender de Bitrates.
+
 ## Próximos Passos Imediatos para Fornecimento
 - Iniciar construção do **Crom-CLI Master** com flags (`crom train`, `crom encode`, `crom play`).
 - Estruturar a renderização Ebitengine para validar a fluidez antes de portá-la para o módulo web CROM Custom Tag (WASM / WebGPU).
