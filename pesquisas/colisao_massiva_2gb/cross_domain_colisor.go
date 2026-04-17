@@ -109,7 +109,8 @@ func processFlatMedia(cmd *exec.Cmd, chunkSize int, byteMultiplier int, maxEleme
 }
 
 func processFlatVideo(path string, chunkSize int, maxElements int, process func([]float64)) {
-	processFlatMedia(exec.Command("ffmpeg", "-i", path, "-f", "image2pipe", "-pix_fmt", "rgb24", "-vcodec", "rawvideo", "-"), chunkSize, 1, maxElements, process)
+	cmd := exec.Command("cat", path)
+	processFlatMedia(cmd, chunkSize, 1, maxElements, process)
 }
 
 func processFlatAudio(path string, chunkSize int, maxElements int, process func([]float64)) {
@@ -152,7 +153,7 @@ func main() {
 
 	// 1. FASE DE TREINO (Aprender todos os Datasets de 500MB)
 	// Limite: 50.000.000 samples por brain (~400MB de floats extraidos)
-	trainLimit := 50000000 
+	trainLimit := 10000000 
 	fmt.Println("\n[...] FASE 1: Treinamento Neural e Persistência")
 
 	tasks := []struct{ Name, Path, Func string }{
