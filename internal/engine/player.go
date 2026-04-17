@@ -19,40 +19,70 @@ type CromGame struct {
 	
 	brain       *AgnosticBrain
 	videoHashes []uint64
-	frameIndex  int
+	frameIndex  int // Agora frameIndex mapeia o Hash Inteiro
 }
 
 func (g *CromGame) Update() error {
-	if g.frameIndex >= len(g.videoHashes) {
-		g.frameIndex = 0 // loop video
-	}
 	if len(g.videoHashes) == 0 {
 		return nil
 	}
 
-	hashO1 := g.videoHashes[g.frameIndex]
-	tensor, exists := g.brain.Memory[hashO1]
+	chunkSize := 768
+	pixelsPerFrame := g.width * g.height
 
-	if exists {
-		// Decodificação Extrema: Tensor -> Tela
-		// Tensor está em 0.0 - 1.0 ou cru (0-255). No nosso Extrator (gray) é de 0 a 1 em base 1.
-		// Vamos injetar O(1) de forma agressiva
-		for i := 0; i < len(g.rgbaBuffer) && i/4 < len(tensor); i += 4 {
-			val := byte(tensor[i/4] * 255.0)
-			g.rgbaBuffer[i]   = val // R
-			g.rgbaBuffer[i+1] = val // G
-			g.rgbaBuffer[i+2] = val // B
-			g.rgbaBuffer[i+3] = 255 // A
+	hashesPerFrame := pixelsPerFrame / chunkSize
+	if pixelsPerFrame%chunkSize != 0 {
+		hashesPerFrame++
+	}
+
+	if g.frameIndex >= len(g.videoHashes) {
+		g.frameIndex = 0 // loop video
+	}
+
+	// Costura de blocos paralela O(1) -> Extrai Nx Hashes e carimba no Buffer da VGPU
+	pixelOffset := 0
+	for h := 0; h < hashesPerFrame; h++ {
+		cursorHash := g.frameIndex + h
+		if cursorHash >= len(g.videoHashes) {
+			break
 		}
+
+		hashO1 := g.videoHashes[cursorHash]
+		tensor, exists := g.brain.Memory[hashO1]
+		
+		if exists {
+			for t := 0; t < len(tensor); t++ {
+				// Mapeando Array 1D Linear pro RGB do Ebiten
+				bufferCursor := (pixelOffset + t) * 4
+				if bufferCursor+3 >= len(g.rgbaBuffer) {
+					break
+				}
+				
+				val := byte(tensor[t] * 255.0)
+				g.rgbaBuffer[bufferCursor]   = val 
+				g.rgbaBuffer[bufferCursor+1] = val 
+				g.rgbaBuffer[bufferCursor+2] = val 
+				g.rgbaBuffer[bufferCursor+3] = 255 
+			}
+		}
+		pixelOffset += chunkSize
 	}
 	
-	g.frameIndex++
+	g.frameIndex += hashesPerFrame
 	return nil
 }
 
 func (g *CromGame) Draw(screen *ebiten.Image) {
 	screen.WritePixels(g.rgbaBuffer)
-	msg := fmt.Sprintf("CROM O(1) Native GUI\nMemória Carregada: %s\nHash Stream: %s\nFPS Absoluto: %0.2f\nQuadro: %d/%d", g.brainPath, g.cromPath, ebiten.ActualFPS(), g.frameIndex, len(g.videoHashes))
+	
+	// Math p/ Telemetria Correta
+	chunkSize := 768
+	hashesPerFrame := (g.width * g.height) / chunkSize
+	if hashesPerFrame == 0 { hashesPerFrame = 1 }
+	quadroAtual := g.frameIndex / hashesPerFrame
+	totalQuadros := len(g.videoHashes) / hashesPerFrame
+
+	msg := fmt.Sprintf("CROM O(1) Native GUI\nMemória Carregada: %s\nHash Stream: %s\nFPS Absoluto: %0.2f\nQuadro Real: %d/%d", g.brainPath, g.cromPath, ebiten.ActualFPS(), quadroAtual, totalQuadros)
 	ebitenutil.DebugPrint(screen, msg)
 }
 
