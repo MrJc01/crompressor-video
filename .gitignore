@@ -1,0 +1,36 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.cromvid
+*.brain
+
+# Profiling
+*.prof
+cpu.prof
+mem.prof
+
+# Media Outputs / Cache
+pesquisas/dados_estaveis/*.mp4
+pesquisas/dados_estaveis/*.png
+pesquisas/dados_estaveis/*.jpg
+pesquisas/dados_estaveis/*.jpeg
+pesquisas/dados_estaveis/*.wav
+pesquisas/imagem_vivo/**/*.png
+pesquisas/imagem_vivo/**/*.jpg
+pesquisas/video_vivo/**/*.png
+pesquisas/video_vivo/**/*.mp4
+
+# IDEs / OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Ignorar grandes arquivos de midia brutos (Para não onerar repositório)
+*.mkv
+*.avi
+*.mov
