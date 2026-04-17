@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CROM Vision Player - O(1) Cognitive Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="glass-header">
+            <div class="brand">
+                <div class="logo-pulse"></div>
+                <h1>CROM <span>VISION HD</span></h1>
+            </div>
+            <div class="status-indicator">
+                <span class="dot disconnected" id="socket-dot"></span>
+                <span id="socket-status">Aguardando Neuro-Stream...</span>
+            </div>
+        </header>
+
+        <!-- MAIN MOVIE THEATER -->
+        <main class="theater-stage">
+            <div class="video-wrapper glass-panel">
+                <div class="overlay-hud">
+                    <div class="hud-item fps-meter">
+                        <span class="value" id="fps-val">0</span>
+                        <span class="label">FPS</span>
+                    </div>
+                    <div class="hud-item latency-meter">
+                        <span class="value" id="ms-val">0.0</span>
+                        <span class="label">Latency (ms)</span>
+                    </div>
+                </div>
+                <!-- Native O(1) Decoding Canvas -->
+                <canvas id="crom-canvas" width="1920" height="1080"></canvas>
+            </div>
+        </main>
+
+        <!-- TELEMETRY DASHBOARD -->
+        <section class="telemetry-deck">
+            
+            <div class="metric-card glass-panel">
+                <h3>Vazão Nativa</h3>
+                <div class="metric-info">
+                    <div class="big-number" id="tps-val">0 <span class="unit">TPS</span></div>
+                    <p class="subtitle">Tensors Per Second</p>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="tps-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card glass-panel">
+                <h3>Gasto de Banda TCP</h3>
+                <div class="metric-info">
+                    <div class="big-number uuid-cost" id="bytes-val">0 <span class="unit">KB/s</span></div>
+                    <p class="subtitle">Payload UUID (Otimização Extrema)</p>
+                </div>
+                <p class="comparison-note">🔥 99.9% menor que Codecs MP4/CABAC.</p>
+            </div>
+
+            <div class="metric-card glass-panel">
+                <h3>Carga GPU vs RAM</h3>
+                <div class="cpu-mock-grid">
+                    <div class="mock-item">
+                        <span>MP4 H.264 (Math)</span>
+                        <div class="load-bar red"></div>
+                    </div>
+                    <div class="mock-item">
+                        <span>CROM O(1) Memory</span>
+                        <div class="load-bar green pulse-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

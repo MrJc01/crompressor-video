@@ -1,2 +1,4 @@
 github.com/MrJc01/crompressor v0.0.0-20260405205308-bc7da38b2213 h1:rUSS3by1wvcrMR97i7TQ5UP3jcKdplVk4Tnzos1F/ow=
 github.com/MrJc01/crompressor v0.0.0-20260405205308-bc7da38b2213/go.mod h1:dcaYIUqaJB3DmNWQiyF2tVMJbioGTLMETmMYPGeelG0=
+github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
