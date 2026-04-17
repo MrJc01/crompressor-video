@@ -34,3 +34,15 @@ pesquisas/video_vivo/**/*.mp4
 *.mkv
 *.avi
 *.mov
+*.mp3
+*.raw
+*.bmp
+
+# Ignorar cerebros serializados e dados do colisor
+*.gob
+pesquisas/dados/
+pesquisas/colisao_massiva_2gb/colisor_massivo
+pesquisas/colisao_massiva_2gb/gerador_dataset
+pesquisas/colisao_massiva_2gb/*.log
+pesquisas/colisao_massiva_2gb/*.csv
+pesquisas/colisao_massiva_2gb/colisor_linux

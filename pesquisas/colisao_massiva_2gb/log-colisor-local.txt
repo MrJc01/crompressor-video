@@ -1,0 +1,4 @@
+==================================================
+[CROSS-DOMAIN MATRIZ] Expondo o Motor CROM a Polimorfias.
+==================================================
+[...] Extraindo Mente Visual (Imagem Ouro_Medio)
