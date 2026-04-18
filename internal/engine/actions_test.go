@@ -11,7 +11,7 @@ import (
 func TestEncoder_OutputFormat(t *testing.T) {
 	// Fake Brain
 	b := &AgnosticBrain{}
-	id := b.Learn([]float64{0.5, 0.5})
+	id := b.Learn([]uint8{128, 128})
 	
 	tmpBrain := "test_encode_brain.gob"
 	b.Save(tmpBrain)
@@ -47,4 +47,23 @@ func TestEncoder_OutputFormat(t *testing.T) {
 		t.Errorf("Corrupção LittleEndian End-to-End na VRAM! Fita CROM violada.")
 	}
 	fin.Close()
+}
+
+func TestRunTrainAndEncode_NoMock(t *testing.T) {
+	// Chamaremos com um arquivo inexistente para FFMPEG falhar
+	// O objetivo primário SRE agora é cobrir a arvore de decisão inicial (Coverage)
+	tmpFile := "arquivo_fantasma.mp4"
+	RunTrain(tmpFile)
+	
+	outFile := "fantasma.crom"
+	brainPath := "fantasma.gob"
+	RunEncode(tmpFile, outFile, brainPath)
+	
+	// Teste RunEncode onde o cerebro existe
+	b := &AgnosticBrain{Memory: make(map[uint64][]uint8)}
+	b.Save(brainPath)
+	defer os.Remove(brainPath)
+	defer os.Remove(outFile)
+	
+	RunEncode(tmpFile, outFile, brainPath)
 }

@@ -58,7 +58,7 @@ func (g *CromGame) Update() error {
 					break
 				}
 				
-				val := byte(tensor[t] * 255.0)
+				val := tensor[t]
 				g.rgbaBuffer[bufferCursor]   = val 
 				g.rgbaBuffer[bufferCursor+1] = val 
 				g.rgbaBuffer[bufferCursor+2] = val 

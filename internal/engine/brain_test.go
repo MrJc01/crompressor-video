@@ -7,9 +7,9 @@ import (
 
 func TestBrainLearn_HashConsistency(t *testing.T) {
 	b := &AgnosticBrain{}
-	tensorA := []float64{0.1, 0.5, 0.9}
-	tensorB := []float64{0.1, 0.5, 0.9}
-	tensorC := []float64{0.2, 0.5, 0.9}
+	tensorA := []uint8{25, 128, 230}
+	tensorB := []uint8{25, 128, 230}
+	tensorC := []uint8{50, 128, 230}
 
 	hashA := b.Learn(tensorA)
 	hashB := b.Learn(tensorB)
@@ -30,11 +30,11 @@ func TestBrainLearn_HashConsistency(t *testing.T) {
 
 func TestBrainMatchForced_Accuracy(t *testing.T) {
 	b := &AgnosticBrain{}
-	id1 := b.Learn([]float64{1.0, 1.0, 1.0})
-	id2 := b.Learn([]float64{0.0, 0.0, 0.0})
+	id1 := b.Learn([]uint8{255, 255, 255})
+	id2 := b.Learn([]uint8{0, 0, 0})
 
-	// Tensor similar ao ID1 com ruído 0.1
-	unseenData := []float64{0.9, 0.9, 0.9}
+	// Tensor similar ao ID1 com ruído leve
+	unseenData := []uint8{230, 230, 230}
 	matched := b.MatchForced(unseenData)
 
 	if matched != id1 {
@@ -42,7 +42,7 @@ func TestBrainMatchForced_Accuracy(t *testing.T) {
 	}
 
 	// Tensor similar ao ID2 
-	unseenDark := []float64{0.2, 0.1, 0.0}
+	unseenDark := []uint8{50, 25, 0}
 	matchedDark := b.MatchForced(unseenDark)
 	
 	if matchedDark != id2 {
@@ -52,7 +52,7 @@ func TestBrainMatchForced_Accuracy(t *testing.T) {
 
 func TestBrain_SaveLoad(t *testing.T) {
 	b1 := &AgnosticBrain{}
-	id := b1.Learn([]float64{3.14, 1.61, 2.71})
+	id := b1.Learn([]uint8{31, 161, 255})
 
 	tmpFile := "test_cerebro_tmp.gob"
 	defer os.Remove(tmpFile)
@@ -70,7 +70,7 @@ func TestBrain_SaveLoad(t *testing.T) {
 	if !ok {
 		t.Errorf("Cérebro carregado teve amnesia. UUID %d despareceu", id)
 	}
-	if val[0] != 3.14 {
+	if val[0] != 31 {
 		t.Errorf("Corrupção de Byte Endian ao ler Cérebro persistido. Ligeiro erro MSE: %v", val[0])
 	}
 }

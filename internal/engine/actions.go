@@ -9,17 +9,21 @@ import (
 // RunTrain varre um diretório bruto (ou um vídeo) e engorda um novo `.gob` master
 func RunTrain(dataPath string) {
 	fmt.Println("[SRE ENGINE] Memória sendo inicializada...")
-	brain := &AgnosticBrain{Memory: make(map[uint64][]float64)}
+	brain := &AgnosticBrain{Memory: make(map[uint64][]uint8)}
 	
 	// 1080p Frame = 2.073.600 px. Se limitarmos em 10M, extrairemos uns 5 frames do vídeo apenas,
 	// o que era insuficiente pois o Sintel começa os 3 primeiros frames como Tela Preta!
 	// Deixaremos o limite como 0 (infinito) para devorar todos os tensores originais do vídeo alvo.
 	chunkSize := 768
-	trainLimit := 0 // 0 = Processar todo o FFMPEG Stream
+	trainLimit := 100000 // Circuit Breaker SRE (~75MB max)
 
 	fmt.Printf("[>] Mastigando Bytes de %s (FFMPEG Pipeline)\n", dataPath)
 	
-	ProcessFlatVideo(dataPath, chunkSize, trainLimit, func(chunk []float64) {
+	ProcessFlatVideo(dataPath, chunkSize, trainLimit, func(chunk []uint8) {
+		if len(brain.Memory) > 100000 {
+			fmt.Println("[SRE CIRCUIT BREAKER] OOM Killer evitado! Max de memórias atingidas. Parando aprendizado agressivo.")
+			return
+		}
 		brain.Learn(chunk)
 	})
 
@@ -53,7 +57,7 @@ func RunEncode(inFile, outFile, brainPath string) {
 	chunkSize := 768
 	hashesGravados := 0
 
-	ProcessFlatVideo(inFile, chunkSize, 0, func(chunk []float64) {
+	ProcessFlatVideo(inFile, chunkSize, 0, func(chunk []uint8) {
 		// Achamos o Hash perfeito via MatchForced pra não inventar um UUID novo!
 		// Assim mantemos o dicionário original puro.
 		uuid := brain.MatchForced(chunk)
