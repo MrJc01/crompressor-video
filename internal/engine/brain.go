@@ -38,6 +38,20 @@ func (c *AgnosticBrain) Learn(tensor []uint8) uint64 {
 
 // MatchForced encontra o Hash UUID para dados "Unseen" (Nunca Vistos) minimizando o MSE Injetado
 func (c *AgnosticBrain) MatchForced(target []uint8) uint64 {
+	// [SRE FAST-PATH O(1)] - Se foi treinado neste mesmo dataset, 99.9% das vezes o Chunk é Exato!
+	// Computamos o Hash nativo e pulamos os bilhões de iterações do Loop Linear de aproximação se ele existir.
+	bytePayload := make([]byte, len(target))
+	for i, v := range target {
+		bytePayload[i] = v
+	}
+	hash32 := sha256.Sum256(bytePayload)
+	fastID := binary.LittleEndian.Uint64(hash32[:8])
+	
+	if _, exists := c.Memory[fastID]; exists {
+		return fastID
+	}
+
+	// Se for Unseen Data real, CAIMOS NA FORÇA BRUTA (O(N)):
 	bestDist := math.MaxFloat64
 	var bestID uint64
 	for id, dbTensor := range c.Memory {
@@ -80,11 +94,7 @@ func (c *AgnosticBrain) Load(path string) error {
 	return gob.NewDecoder(f).Decode(&c.Memory)
 }
 
-// ======================================
-// OS/Media Extractors
-// ======================================
-
-func ProcessFlatMedia(cmd *exec.Cmd, chunkSize int, byteMultiplier int, maxElements int, process func([]uint8)) {
+func ProcessFlatMedia(cmd *exec.Cmd, chunkSize int, byteMultiplier int, maxElements int, process func([]uint8) bool) {
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Start()
 	defer cmd.Process.Kill()
@@ -115,16 +125,16 @@ func ProcessFlatMedia(cmd *exec.Cmd, chunkSize int, byteMultiplier int, maxEleme
 			}
 		}
 		
-		process(samples)
-		total += len(samples)
+		if !process(samples) {
+			break
+		}
+		total++ // SRE Bug: incremento global por chunk e não por bytes
 	}
 	cmd.Process.Kill()
 	cmd.Wait()
 }
 
-func ProcessFlatVideo(path string, chunkSize int, maxElements int, process func([]uint8)) {
-    // Para simplificar a POC como era antes para ler um video cru (usando FFMPEG inves de CAT)
-	// FORÇANDO SCALE=640:360 pra bater matematicamente com os Canvas/VRAM pre-fixados!
+func ProcessFlatVideo(path string, chunkSize int, maxElements int, process func([]uint8) bool) {
 	cmd := exec.Command("ffmpeg", "-i", path, "-vf", "scale=640:360", "-f", "rawvideo", "-pix_fmt", "gray", "-")
 	ProcessFlatMedia(cmd, chunkSize, 1, maxElements, process)
 }

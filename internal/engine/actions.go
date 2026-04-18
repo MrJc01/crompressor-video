@@ -6,50 +6,53 @@ import (
 	"os"
 )
 
-// RunTrain varre um diretório bruto (ou um vídeo) e engorda um novo `.gob` master
-func RunTrain(dataPath string) {
-	fmt.Println("[SRE ENGINE] Memória sendo inicializada...")
-	brain := &AgnosticBrain{Memory: make(map[uint64][]uint8)}
-	
-	// 1080p Frame = 2.073.600 px. Se limitarmos em 10M, extrairemos uns 5 frames do vídeo apenas,
-	// o que era insuficiente pois o Sintel começa os 3 primeiros frames como Tela Preta!
-	// Deixaremos o limite como 0 (infinito) para devorar todos os tensores originais do vídeo alvo.
-	chunkSize := 768
-	trainLimit := 100000 // Circuit Breaker SRE (~75MB max)
-
-	fmt.Printf("[>] Mastigando Bytes de %s (FFMPEG Pipeline)\n", dataPath)
-	
-	ProcessFlatVideo(dataPath, chunkSize, trainLimit, func(chunk []uint8) {
-		if len(brain.Memory) > 100000 {
-			fmt.Println("[SRE CIRCUIT BREAKER] OOM Killer evitado! Max de memórias atingidas. Parando aprendizado agressivo.")
-			return
-		}
-		brain.Learn(chunk)
-	})
-
-	caminhoFinal := "hibrido.gob"
-	if err := brain.Save(caminhoFinal); err != nil {
-		fmt.Printf("[ERRO FATAL] Falha de Sistema de Arquivos O(1): %v\n", err)
-		return
-	}
-	
-	fmt.Printf("[+] Cérebro %s salvo com Sucesso! %d Hashs retidos.\n", caminhoFinal, len(brain.Memory))
+var SRELog = func(msg string) {
+	fmt.Println(msg)
 }
 
-// RunEncode lê um vídeo gigante e devolve a fita CROM UUID puramente int64
-func RunEncode(inFile, outFile, brainPath string) {
+// RunTrain varre um diretório bruto (ou um vídeo) e engorda um novo `.gob` master
+func RunTrain(dataPath string, caminhoFinal string, trainLimit int) {
+	brain := &AgnosticBrain{Memory: make(map[uint64][]uint8)}
+	
+	if err := brain.Load(caminhoFinal); err == nil {
+		SRELog(fmt.Sprintf("[SRE ENGINE] Memória Retida Encontrada! Expandindo base de %d hashes...", len(brain.Memory)))
+	} else {
+		SRELog("[SRE ENGINE] Nenhuma memória prévia ligada. Base zero iniciada.")
+	}
+	
+	chunkSize := 768
+
+	SRELog(fmt.Sprintf("[>] Extraindo Video Cru de %s (FFMPEG Visual Decoder)", dataPath))
+	
+	ProcessFlatVideo(dataPath, chunkSize, trainLimit, func(chunk []uint8) bool {
+		if len(brain.Memory) >= trainLimit {
+			SRELog(fmt.Sprintf("[SRE CIRCUIT BREAKER] OOM Killer evitado! Max de %d memórias atingidas. Parando aprendizado agressivo.", trainLimit))
+			return false // Aborta FFMPEG Loop Imediatamente
+		}
+		brain.Learn(chunk)
+		return true
+	})
+	if err := brain.Save(caminhoFinal); err != nil {
+		SRELog(fmt.Sprintf("[ERRO FATAL] Falha de Sistema de Arquivos O(1): %v", err))
+		return
+	}
+	
+	SRELog(fmt.Sprintf("[+] Cérebro %s salvo com Sucesso! %d Hashs retidos.", caminhoFinal, len(brain.Memory)))
+}
+
+func RunEncode(inFile, outFile, brainPath string, trainLimit int) {
 	brain := &AgnosticBrain{}
-	fmt.Printf("[<] Acoplando Fita de Cérebro: %s\n", brainPath)
+	SRELog(fmt.Sprintf("[<] Acoplando Fita de Cérebro: %s", brainPath))
 	if err := brain.Load(brainPath); err != nil {
-		fmt.Printf("[!] Cérebro %s não encontrado ou corrompido! (%v)\n", brainPath, err)
+		SRELog(fmt.Sprintf("[!] Cérebro %s não encontrado ou corrompido! (%v)", brainPath, err))
 		return
 	}
 
-	fmt.Printf("[>] Mente Carregada com %d memórias. Iniciando Compressão CROM...\n", len(brain.Memory))
+	SRELog(fmt.Sprintf("[>] Mente Carregada com %d memórias. Iniciando Compressão CROM...", len(brain.Memory)))
 
 	fout, err := os.Create(outFile)
 	if err != nil {
-		fmt.Printf("[!] Erro E/S %s: %v\n", outFile, err)
+		SRELog(fmt.Sprintf("[!] Erro E/S %s: %v", outFile, err))
 		return
 	}
 	defer fout.Close()
@@ -57,7 +60,7 @@ func RunEncode(inFile, outFile, brainPath string) {
 	chunkSize := 768
 	hashesGravados := 0
 
-	ProcessFlatVideo(inFile, chunkSize, 0, func(chunk []uint8) {
+	ProcessFlatVideo(inFile, chunkSize, trainLimit, func(chunk []uint8) bool {
 		// Achamos o Hash perfeito via MatchForced pra não inventar um UUID novo!
 		// Assim mantemos o dicionário original puro.
 		uuid := brain.MatchForced(chunk)
@@ -66,8 +69,9 @@ func RunEncode(inFile, outFile, brainPath string) {
 		binary.LittleEndian.PutUint64(b[:], uuid)
 		fout.Write(b[:])
 		hashesGravados++
+		return true // Continua o loop
 	})
 
-	fmt.Printf("[SRE ENCODER] Morte do Formato Convencional Concluída.\n")
-	fmt.Printf("[+] Arquivo CROM gerado: %s (%d Hashes em %d Bytes O(1))\n", outFile, hashesGravados, hashesGravados*8)
+	SRELog("[SRE ENCODER] Morte do Formato Convencional Concluída.")
+	SRELog(fmt.Sprintf("[+] Arquivo CROM gerado: %s (%d Hashes em %d Bytes O(1))", outFile, hashesGravados, hashesGravados*8))
 }
