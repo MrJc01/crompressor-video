@@ -46,3 +46,8 @@ pesquisas/colisao_massiva_2gb/gerador_dataset
 pesquisas/colisao_massiva_2gb/*.log
 pesquisas/colisao_massiva_2gb/*.csv
 pesquisas/colisao_massiva_2gb/colisor_linux
+
+# CROM Studio
+web/tmp/
+web/brains/
+*.crom
