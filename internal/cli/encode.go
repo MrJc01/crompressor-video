@@ -22,7 +22,7 @@ var encodeCmd = &cobra.Command{
 		}
 
 		fmt.Printf("[SRE ENCODER] Disparando Lógica FFMPEG Raw...\n")
-		engine.RunEncode(inFile, outFile, brainEncodePath)
+		engine.RunEncode(inFile, outFile, brainEncodePath, 100000)
 	},
 }
 

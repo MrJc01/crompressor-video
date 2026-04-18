@@ -27,7 +27,7 @@ var trainCmd = &cobra.Command{
 		}
 		
 		fmt.Printf(">> Mapeando O(1) Tensors no disco: %s\n", dataPath)
-		engine.RunTrain(dataPath)
+		engine.RunTrain(dataPath, "hibrido.gob", 100000)
 	},
 }
 
