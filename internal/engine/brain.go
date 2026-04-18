@@ -124,6 +124,7 @@ func ProcessFlatMedia(cmd *exec.Cmd, chunkSize int, byteMultiplier int, maxEleme
 
 func ProcessFlatVideo(path string, chunkSize int, maxElements int, process func([]uint8)) {
     // Para simplificar a POC como era antes para ler um video cru (usando FFMPEG inves de CAT)
-	cmd := exec.Command("ffmpeg", "-i", path, "-f", "rawvideo", "-pix_fmt", "gray", "-")
+	// FORÇANDO SCALE=640:360 pra bater matematicamente com os Canvas/VRAM pre-fixados!
+	cmd := exec.Command("ffmpeg", "-i", path, "-vf", "scale=640:360", "-f", "rawvideo", "-pix_fmt", "gray", "-")
 	ProcessFlatMedia(cmd, chunkSize, 1, maxElements, process)
 }

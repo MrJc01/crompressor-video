@@ -3,20 +3,39 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"syscall/js"
 )
 
-// Mock da Mente Carregada na RAM Web
-var memoryMock map[uint64][]byte
+// O Cérebro Real carregado na Memória WebAssembly
+var memoryReal map[uint64][]uint8
 
-func initializeBrain(this js.Value, p []js.Value) interface{} {
-	// Chamado pelo Javascript quando o IndexedDB envia o ArrayBuffer
-	// Em produção iteraríamos usando encoding/gob
-	memoryMock = make(map[uint64][]byte)
+// loadBrainBytes recebe o array puro `Uint8Array` do Javascript (proveniente do IndexedDB)
+func loadBrainBytes(this js.Value, p []js.Value) interface{} {
+	if len(p) < 1 {
+		fmt.Println("[WASM] Erro: Array nulo recebido")
+		return false
+	}
+
+	jsBuffer := p[0]
+	length := jsBuffer.Get("byteLength").Int()
 	
-	// Preenchimento de exemplo pro WASM rodar liso
-	memoryMock[42] = []byte{255, 0, 100, 255} // RGBA
+	goBytes := make([]byte, length)
+	js.CopyBytesToGo(goBytes, jsBuffer)
+
+	reader := bytes.NewReader(goBytes)
+	decoder := gob.NewDecoder(reader)
 	
+	memoryReal = make(map[uint64][]uint8)
+	err := decoder.Decode(&memoryReal)
+	if err != nil {
+		fmt.Printf("[WASM] Falha crítica ao derreter GOB na memória: %v\n", err)
+		return false
+	}
+
+	fmt.Printf("[WASM] Mente carregada com sucesso! UUIDs retidos: %d\n", len(memoryReal))
 	return true
 }
 
@@ -24,24 +43,37 @@ func decodeHash(this js.Value, p []js.Value) interface{} {
 	if len(p) < 1 {
 		return nil
 	}
-	hashVal := uint64(p[0].Int())
+	// Em Javascript o numero pode vir grande, mas internamente Int() trata ou parseFloat (Number do js)
+	// Vamos forçar js.Value Float() pq o JS trata tudo como double se ultrapassar ints normais, 
+	// Mas como os hashes podem ser gigantes (uint64), o ideal é extrair de String caso venha de string ou BigInt?
+	// Para fita CROM recebemos floats/bigints do JS, vamos extrair os hashes nativos:
+	// JS Number handles safe integers up to 2^53. Hash UUIDs can be larger, mas faremos cast direto.
 	
-	// Busca O(1) Puríssima WebAssembly
-	rgbaChunk, exists := memoryMock[hashVal]
+	// Como na Fita CROM teremos strings ou bigints, pegaremos via String 
+	hashStr := p[0].String()
+	var hashVal uint64
+	fmt.Sscanf(hashStr, "%d", &hashVal)
+	
+	rgbaChunk, exists := memoryReal[hashVal]
 	if !exists {
-		// Fallback Noise
-		rgbaChunk = []byte{0, 0, 0, 255}
+		// ALERTA DE SRE: Se houver Cache Miss na Hash, o Fallback OBRIGATORIAMENTE deve ser 768 bytes!
+		// Antes mandávamos 4 bytes e a engine JS avançava a leitura em +768, quebrando toda a matriz matemática visual (criando as linhas verticais escuras)
+		rgbaChunk = make([]uint8, 768)
+		for i := 0; i < 768; i++ {
+			rgbaChunk[i] = 10 // Ruido bem escuro
+		}
 	}
 	
-	// Repassando Ponteiro Memória para Javascript (Uint8Array)
 	jsArr := js.Global().Get("Uint8Array").New(len(rgbaChunk))
 	js.CopyBytesToJS(jsArr, rgbaChunk)
+	
 	return jsArr
 }
 
 func main() {
 	c := make(chan struct{}, 0)
-	js.Global().Set("cromInitializeBrain", js.FuncOf(initializeBrain))
+	js.Global().Set("cromLoadBrainBytes", js.FuncOf(loadBrainBytes))
 	js.Global().Set("cromDecodeHash", js.FuncOf(decodeHash))
+	fmt.Println("[WASM Native Engine] CROM OS Online.")
 	<-c // Keep WebAssembly Runtime Alive
 }
