@@ -53,11 +53,11 @@ func TestRunTrainAndEncode_NoMock(t *testing.T) {
 	// Chamaremos com um arquivo inexistente para FFMPEG falhar
 	// O objetivo primário SRE agora é cobrir a arvore de decisão inicial (Coverage)
 	tmpFile := "arquivo_fantasma.mp4"
-	RunTrain(tmpFile)
+	RunTrain(tmpFile, "fantasma_brain.gob", 0)
 	
 	outFile := "fantasma.crom"
 	brainPath := "fantasma.gob"
-	RunEncode(tmpFile, outFile, brainPath)
+	RunEncode(tmpFile, outFile, brainPath, 0)
 	
 	// Teste RunEncode onde o cerebro existe
 	b := &AgnosticBrain{Memory: make(map[uint64][]uint8)}
@@ -65,5 +65,5 @@ func TestRunTrainAndEncode_NoMock(t *testing.T) {
 	defer os.Remove(brainPath)
 	defer os.Remove(outFile)
 	
-	RunEncode(tmpFile, outFile, brainPath)
+	RunEncode(tmpFile, outFile, brainPath, 0)
 }
